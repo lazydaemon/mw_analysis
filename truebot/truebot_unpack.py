@@ -69,7 +69,7 @@ def find_decryption_param(pe, start_offset):
     and_ins = Yara(name="and_ins", strings={"and1": s1, "and2": s2, "and3": s3}, condition="any of them")
 
     logger.debug(f'Searching for decryption param near virtual address {hex(start_offset)}')
-    match = pe.yarav(ruleset=and_ins, addr=start_offset, length=128)
+    match = pe.yarav(ruleset=and_ins, addr=start_offset, length=300)
     if match:
         rule_offset = 2
         _offset = None
@@ -167,23 +167,21 @@ def main():
             key, key_offset = find_key(pe, offset - 128)
             if key:
                 va_key = pe.uint32v(addr=key_offset + 1)
-                va_key = int.from_bytes(va_key, byteorder="little")
                 logger.info(f'Found key {key} at virtual address {hex(va_key)}')
                 # the instruction for reading the decrypted blob must be nearby
                 s1 = YaraString('8D (8A | 9E) ?? ?? ?? ?? [0-6] 81 (F9 | FB)', type=YaraString.HEX)
                 access_blob = Yara(name="access_blob", strings={"lea_ecx": s1}, condition="any of them")
                 match = pe.yarav(ruleset=access_blob, addr=key_offset, length=64)
                 access_blob_offset = match.elements["access_blob"].elements["lea_ecx"][0]
-                va_blob = pe.uint32v(addr=key_offset + access_blob_offset + 2)
-                va_blob = int.from_bytes(va_blob, byteorder="little")
+                va_blob = pe.uint32v(addr=access_blob_offset + 2)
                 logger.info(f'Found blob start at virtual address {hex(va_blob)}')
 
                 for i in range(6):
-                    byte = pe.uint8v(addr=key_offset + access_blob_offset + 6 + i)
+                    byte = pe.uint8v(addr=access_blob_offset + 6 + i)
                     if byte == b'\x81':
                         break
 
-                va_end = pe.uint32v(addr=key_offset + access_blob_offset + 8 + i)
+                va_end = pe.uint32v(addr=access_blob_offset + 8 + i)
                 logger.info(f'Found blob end at virtual address {hex(va_end)}')
                 blob_len = va_end - va_blob
                 param = find_decryption_param(pe, key_offset)
