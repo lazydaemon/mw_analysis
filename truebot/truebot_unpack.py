@@ -127,7 +127,7 @@ def main():
             param = find_decryption_param(pe, key_offset)
             encrypted_blob = pe.readv(addr=blob_va, length=blob_len)
             decrypted = decrypt(encrypted_blob, key, param)
-            dump_file(f'{abs_file_path}.malware', bytes(decrypted))
+            dump_file(f'{abs_file_path}.unpacked', bytes(decrypted))
     if edge_case:
         # Edge Case: The decryption function is directly a dll export
 
@@ -186,7 +186,7 @@ def main():
                 blob_len = va_end - va_blob
                 param = find_decryption_param(pe, key_offset)
                 decrypted = decrypt(pe.readv(addr=va_blob, length=blob_len), key, param)
-                dump_file(f'{abs_file_path}.malware', bytes(decrypted))
+                dump_file(f'{abs_file_path}.unpacked', bytes(decrypted))
 
 
 if __name__ == "__main__":
