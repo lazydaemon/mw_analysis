@@ -69,7 +69,7 @@ def find_decryption_param(pe, start_offset):
     and_ins = Yara(name="and_ins", strings={"and1": s1, "and2": s2, "and3": s3}, condition="any of them")
 
     logger.debug(f'Searching for decryption param near virtual address {hex(start_offset)}')
-    match = pe.yarav(ruleset=and_ins, addr=start_offset, length=300)
+    match = pe.yarav(ruleset=and_ins, addr=start_offset, length=320)
     if match:
         rule_offset = 2
         _offset = None
@@ -177,7 +177,7 @@ def main():
                 logger.info(f'Found blob start at virtual address {hex(va_blob)}')
 
                 for i in range(6):
-                    byte = pe.uint8v(addr=access_blob_offset + 6 + i)
+                    byte = pe.uint8v(addr=key_offset + access_blob_offset + 6 + i)
                     if byte == b'\x81':
                         break
 
